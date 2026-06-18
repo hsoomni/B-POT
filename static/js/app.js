@@ -60,7 +60,7 @@ function render() {
     const q = currentQuestion();
     els.container.innerHTML = renderQuestion(q, answerFor(q.id), questionIndexAt(state.stepIndex) + 1, 10);
   } else if (kind === 'result') renderResultStep();
-  else if (kind === 'cta') els.container.innerHTML = renderCta();
+  else if (kind === 'cta') renderCtaStep();
 
   wireScreen(kind);
   updateNav(kind);
@@ -129,13 +129,13 @@ function wireScreen(kind) {
     const ctaBtn = $('[data-go-cta]', els.container);
     if (ctaBtn) ctaBtn.addEventListener('click', () => go(nextIndex(state.stepIndex)));
   }
-  if (kind === 'cta') wireCta();
+  if (kind === 'cta' && !state.inquirySent) wireCta();
 }
 
 async function onNext() {
   const kind = stepKind(state.stepIndex);
   if (!canGoNext(state) || submitting) return;
-  if (kind === 'question' && questionIndexAt(state.stepIndex) === 9) {
+  if (kind === 'question' && questionIndexAt(state.stepIndex) === 9 && !state.result) {
     submitting = true;
     try { await submit(); } finally { submitting = false; }
   }
@@ -167,6 +167,14 @@ function fallbackGenerated() {
   const g = {};
   for (const item of order) g[item] = { label: labels[item], head: '당신의 첫 씨앗', body: '잠시 후 다시 시도해 주세요.' };
   return g;
+}
+
+function renderCtaStep() {
+  if (state.inquirySent) {
+    els.container.innerHTML = '<div class="screen"><h2 class="screen-title">고맙습니다. 곧 연락드릴게요.</h2></div>';
+    return;
+  }
+  els.container.innerHTML = renderCta();
 }
 
 function renderResultStep() {
@@ -209,7 +217,7 @@ function wireCta() {
     const resp = await fetch('/api/inquiry/', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
     });
-    if (resp.ok) { $('.screen-cta', form).innerHTML = '<h2 class="screen-title">고맙습니다. 곧 연락드릴게요.</h2>'; }
+    if (resp.ok) { state = { ...state, inquirySent: true }; $('.screen-cta', form).innerHTML = '<h2 class="screen-title">고맙습니다. 곧 연락드릴게요.</h2>'; }
     else { errEl.hidden = false; errEl.textContent = '전송에 실패했어요. 잠시 후 다시 시도해 주세요.'; }
   });
 }
