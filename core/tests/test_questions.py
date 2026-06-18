@@ -27,8 +27,16 @@ def test_result_items_have_six_each():
     assert len(Q.RESULT_ITEMS["brand"]) == 6
     assert len(Q.RESULT_ITEMS["personal"]) == 6
 
-def test_optional_input_only_on_three_cards():
+def test_input_flag_on_expected_cards():
+    expected = {
+        "brand": {"naming", "core_value", "communication"},
+        "personal": {"naming", "core_value", "originality"},
+    }
     for track in ("brand", "personal"):
         input_items = {q["item"] for q in Q.get_questions(track) if q.get("input")}
-        assert "naming" in input_items
-        assert "core_value" in input_items
+        assert input_items == expected[track]
+
+
+def test_item_labels_cover_all_used_items():
+    used = {q["item"] for track in ("brand", "personal") for q in Q.get_questions(track)}
+    assert used <= set(Q.ITEM_LABELS), f"missing labels for: {used - set(Q.ITEM_LABELS)}"

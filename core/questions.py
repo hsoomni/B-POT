@@ -5,6 +5,8 @@ Each question: {id, item, prompt, options[list[str]], input(bool optional)}.
 Option wording is final-tunable here without touching generation logic shape.
 """
 
+__all__ = ["QUESTIONS", "RESULT_ITEMS", "ITEM_LABELS", "get_questions"]
+
 RESULT_ITEMS = {
     "brand": ["naming", "mission", "core_value", "concept", "persona", "communication"],
     "personal": ["naming", "mission", "core_value", "concept", "persona", "originality"],
@@ -70,6 +72,6 @@ _PERSONAL = [
 QUESTIONS = {"brand": _BRAND, "personal": _PERSONAL}
 
 
-def get_questions(track):
-    """Return the list of questions for a track. Raises KeyError on unknown track."""
+def get_questions(track) -> list[dict]:
+    """Return the list of question dicts for a track. Raises KeyError on unknown track."""
     return QUESTIONS[track]
