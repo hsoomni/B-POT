@@ -7,8 +7,8 @@ def test_models_registered_in_admin():
     assert admin.site.is_registered(CTAInquiry)
 
 @pytest.mark.django_db
-def test_admin_result_changelist_loads(client, django_user_model):
-    django_user_model.objects.create_superuser("admin", "a@a.com", "pass12345")
-    client.login(username="admin", password="pass12345")
+def test_admin_changelists_load(client, django_user_model):
+    user = django_user_model.objects.create_superuser("admin", "a@a.com", "pass12345")
+    client.force_login(user)
     assert client.get("/admin/core/result/").status_code == 200
     assert client.get("/admin/core/ctainquiry/").status_code == 200

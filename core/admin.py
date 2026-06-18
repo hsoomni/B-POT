@@ -7,6 +7,7 @@ class ResultAdmin(admin.ModelAdmin):
     list_filter = ("track", "created_at")
     readonly_fields = ("created_at",)
 
+
 @admin.register(CTAInquiry)
 class CTAInquiryAdmin(admin.ModelAdmin):
     list_display = ("id", "inquiry_type", "company", "manager", "email", "created_at")
