@@ -8,6 +8,7 @@
   --seed-green: #5DAA3C;
   --seed-teal: #3FA9A0;
   --paper: #E9D4B3;
+  --ink-body: #3a3a3a;
   --max: 460px;
 }
 * { box-sizing: border-box; }
@@ -70,7 +71,7 @@ body {
 .packet-item:first-child { border-top: none; }
 .packet-label { font-size: 10px; letter-spacing: .16em; color: var(--ink-soft); font-weight: 800; }
 .packet-head { font-size: 16px; font-weight: 800; margin: 3px 0 2px; }
-.packet-body { font-size: 12px; line-height: 1.5; color: #3a3a3a; }
+.packet-body { font-size: 12px; line-height: 1.5; color: var(--ink-body); }
 .packet-foot { background: var(--ink); color: #fff; text-align: center; padding: 10px; font-size: 11px; letter-spacing: .08em; }
 .btn-save { font: inherit; font-weight: 800; background: var(--ink); color: #fff; border: none; border-radius: 12px; padding: 13px 24px; cursor: pointer; }
 
