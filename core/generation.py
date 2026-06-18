@@ -4,6 +4,7 @@
 shaped as {item: {"label": str, "head": str, "body": str}}. Rule-based assembly is the
 guaranteed fallback; Gemini polish (later task) is layered on top when a key is configured.
 """
+from django.conf import settings
 from core import questions as Q
 
 # Headline lead-ins per result item. {kw} is filled with the primary chosen keyword.
@@ -103,6 +104,47 @@ def assemble(track, answers, basic_info=None):
     return out
 
 
+def _polish(track, assembled, basic_info):
+    """Refine assembled copy tone via Gemini. Never sends CTA contact info.
+
+    Raises on any error; caller (generate) handles fallback.
+    """
+    import json
+    import google.generativeai as genai
+
+    genai.configure(api_key=settings.GEMINI_API_KEY)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+
+    safe_info = {k: basic_info.get(k) for k in ("name", "category", "target")} if basic_info else {}
+    prompt = (
+        "너는 한국어 브랜드 카피라이터다. 아래 JSON의 각 항목 head/body의 '톤과 문장'만 "
+        "자연스럽게 다듬어라. 의미·구조·키는 바꾸지 말고, 같은 키 구조의 JSON만 출력하라.\n"
+        f"기본정보: {json.dumps(safe_info, ensure_ascii=False)}\n"
+        f"항목: {json.dumps(assembled, ensure_ascii=False)}"
+    )
+    resp = model.generate_content(prompt)
+    text = resp.text.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        text = text[text.find("{"):text.rfind("}") + 1]
+    polished = json.loads(text)
+
+    out = {}
+    for item in Q.RESULT_ITEMS[track]:
+        block = polished.get(item) or {}
+        out[item] = {
+            "label": Q.ITEM_LABELS[item],
+            "head": (block.get("head") or assembled[item]["head"]).strip(),
+            "body": (block.get("body") or assembled[item]["body"]).strip(),
+        }
+    return out
+
 def generate(track, answers, basic_info=None):
-    """Public entry. Assembly fallback now; Gemini polish layered in a later task."""
-    return assemble(track, answers, basic_info)
+    """Public entry. Assembly fallback, optional Gemini polish on top."""
+    assembled = assemble(track, answers, basic_info)
+    if settings.GEMINI_API_KEY:
+        try:
+            return _polish(track, assembled, basic_info or {})
+        except Exception:
+            return assembled
+    return assembled
