@@ -1,6 +1,7 @@
 import json
 import pytest
 from unittest.mock import patch
+from django.conf import settings
 from django.core import mail
 from core.models import Result, CTAInquiry
 
@@ -13,7 +14,7 @@ def test_api_inquiry_saves_and_emails(client):
     assert resp.status_code == 200
     assert CTAInquiry.objects.filter(company="숨니", result=r).exists()
     assert len(mail.outbox) == 1
-    assert "hsoomni@gmail.com" in mail.outbox[0].to
+    assert settings.EMAIL_TO in mail.outbox[0].to
 
 @pytest.mark.django_db
 def test_api_inquiry_email_failure_is_isolated(client):
@@ -29,3 +30,10 @@ def test_api_inquiry_requires_fields(client):
     resp = client.post("/api/inquiry/", data=json.dumps({"company": "X"}),
                        content_type="application/json")
     assert resp.status_code == 400
+
+@pytest.mark.django_db
+def test_api_inquiry_rejects_unknown_type(client):
+    payload = {"inquiry_type": "bogus", "company": "X", "manager": "Y", "email": "y@example.com"}
+    resp = client.post("/api/inquiry/", data=json.dumps(payload), content_type="application/json")
+    assert resp.status_code == 400
+    assert resp.json()["error"] == "unknown_type"

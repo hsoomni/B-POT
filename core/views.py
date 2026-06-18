@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from django.conf import settings
 from django.http import JsonResponse
@@ -95,10 +96,12 @@ def api_inquiry(request):
         result=result,
     )
 
-    # Email failure must not break inquiry persistence.
+    # Email is best-effort: failure must not break inquiry persistence, but log it.
     try:
         send_inquiry_notification(inquiry)
     except Exception:
-        pass
+        logging.getLogger(__name__).exception(
+            "Email notification failed for inquiry %s", inquiry.pk
+        )
 
     return JsonResponse({"ok": True, "inquiry_id": inquiry.pk})

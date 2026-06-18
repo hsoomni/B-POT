@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 
+
 def send_inquiry_notification(inquiry):
     """Email the team about a new CTA inquiry. Returns True on send.
 
