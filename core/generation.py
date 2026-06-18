@@ -110,24 +110,25 @@ def _polish(track, assembled, basic_info):
     Raises on any error; caller (generate) handles fallback.
     """
     import json
+    import re
     import google.generativeai as genai
 
     genai.configure(api_key=settings.GEMINI_API_KEY)
     model = genai.GenerativeModel("gemini-1.5-flash")
 
-    safe_info = {k: basic_info.get(k) for k in ("name", "category", "target")} if basic_info else {}
+    safe_info = {k: basic_info.get(k) for k in ("name", "category", "target")}
+    payload = {item: {"head": b["head"], "body": b["body"]} for item, b in assembled.items()}
     prompt = (
         "너는 한국어 브랜드 카피라이터다. 아래 JSON의 각 항목 head/body의 '톤과 문장'만 "
         "자연스럽게 다듬어라. 의미·구조·키는 바꾸지 말고, 같은 키 구조의 JSON만 출력하라.\n"
         f"기본정보: {json.dumps(safe_info, ensure_ascii=False)}\n"
-        f"항목: {json.dumps(assembled, ensure_ascii=False)}"
+        f"항목: {json.dumps(payload, ensure_ascii=False)}"
     )
     resp = model.generate_content(prompt)
-    text = resp.text.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        text = text[text.find("{"):text.rfind("}") + 1]
-    polished = json.loads(text)
+    match = re.search(r"\{[\s\S]*\}", resp.text)
+    if not match:
+        raise ValueError("Gemini 응답에서 JSON 객체를 찾지 못함")
+    polished = json.loads(match.group(0))
 
     out = {}
     for item in Q.RESULT_ITEMS[track]:
@@ -138,6 +139,7 @@ def _polish(track, assembled, basic_info):
             "body": (block.get("body") or assembled[item]["body"]).strip(),
         }
     return out
+
 
 def generate(track, answers, basic_info=None):
     """Public entry. Assembly fallback, optional Gemini polish on top."""

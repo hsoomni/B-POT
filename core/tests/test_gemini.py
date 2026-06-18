@@ -13,6 +13,9 @@ def test_polish_used_when_key_set(settings):
     with patch.object(generation, "_polish", return_value=polished) as mp:
         result = generation.generate("brand", _answers("brand"), {"name": "X"})
     mp.assert_called_once()
+    call_args = mp.call_args.args
+    assert call_args[0] == "brand"
+    assert call_args[2] == {"name": "X"}
     assert result["naming"]["head"] == "P"
 
 def test_polish_failure_falls_back_to_assembly(settings):
