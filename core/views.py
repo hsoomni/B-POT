@@ -59,6 +59,8 @@ def api_submit(request):
 
     answers = payload.get("answers") or []
     basic_info = payload.get("basic_info") or {}
+    if not isinstance(answers, list) or not isinstance(basic_info, dict):
+        return JsonResponse({"error": "invalid_payload"}, status=400)
     generated = generate(track, answers, basic_info)
 
     result = Result.objects.create(

@@ -70,3 +70,22 @@ def test_api_submit_rejects_oversized_attachment(client, settings, tmp_path):
     })
     assert resp.status_code == 400
     assert resp.json()["error"] == "too_large"
+
+
+@pytest.mark.django_db
+def test_api_submit_rejects_malformed_answers(client):
+    resp = client.post(
+        "/api/submit/",
+        data=json.dumps({"track": "brand", "answers": "notalist"}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+    assert resp.json()["error"] == "invalid_payload"
+
+
+@pytest.mark.django_db
+def test_api_submit_rejects_malformed_multipart_payload(client, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    resp = client.post("/api/submit/", data={"payload": "{bad json"})  # multipart, invalid JSON string
+    assert resp.status_code == 400
+    assert resp.json()["error"] == "invalid_json"
