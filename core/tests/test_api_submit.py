@@ -57,3 +57,16 @@ def test_api_submit_rejects_bad_extension(client, settings, tmp_path):
         "attachment": f,
     })
     assert resp.status_code == 400
+
+@pytest.mark.django_db
+def test_api_submit_rejects_oversized_attachment(client, settings, tmp_path):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    settings.MEDIA_ROOT = tmp_path
+    settings.MAX_UPLOAD_BYTES = 3  # force the size guard to trip
+    f = SimpleUploadedFile("brief.txt", b"too many bytes", content_type="text/plain")
+    resp = client.post("/api/submit/", data={
+        "payload": json.dumps({"track": "brand", "answers": []}),
+        "attachment": f,
+    })
+    assert resp.status_code == 400
+    assert resp.json()["error"] == "too_large"
