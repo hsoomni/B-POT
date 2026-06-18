@@ -65,3 +65,40 @@ def api_submit(request):
         generated=generated, attachment=attachment,
     )
     return JsonResponse({"result_id": result.pk, "generated": generated})
+
+
+@csrf_exempt
+@require_POST
+def api_inquiry(request):
+    try:
+        payload = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    required = ("inquiry_type", "company", "manager", "email")
+    if not all(payload.get(k) for k in required):
+        return JsonResponse({"error": "missing_fields"}, status=400)
+
+    valid_types = {c[0] for c in CTAInquiry.TYPE_CHOICES}
+    if payload["inquiry_type"] not in valid_types:
+        return JsonResponse({"error": "unknown_type"}, status=400)
+
+    result = None
+    if payload.get("result_id"):
+        result = Result.objects.filter(pk=payload["result_id"]).first()
+
+    inquiry = CTAInquiry.objects.create(
+        inquiry_type=payload["inquiry_type"],
+        company=payload["company"],
+        manager=payload["manager"],
+        email=payload["email"],
+        result=result,
+    )
+
+    # Email failure must not break inquiry persistence.
+    try:
+        send_inquiry_notification(inquiry)
+    except Exception:
+        pass
+
+    return JsonResponse({"ok": True, "inquiry_id": inquiry.pk})
