@@ -47,3 +47,11 @@ test('renderCta lists three inquiry types', () => {
   assert.ok(html.includes('value="workshop"'));
   assert.ok(html.includes('name="email"'));
 });
+
+test('renderers escape dangerous user values end to end', () => {
+  assert.ok(renderBasic({ name: '<b>"x"', category: '', target: '' }).includes('value="&lt;b&gt;&quot;x&quot;"'));
+  const q = { id: 'b1', item: 'naming', prompt: 'p', options: ['<x>'], input: true };
+  const html = renderQuestion(q, { qid: 'b1', choice: '<x>', text: '"t"' }, 1, 10);
+  assert.ok(html.includes('data-choice="&lt;x&gt;"'));
+  assert.ok(html.includes('value="&quot;t&quot;"'));
+});
