@@ -4,7 +4,6 @@
 shaped as {item: {"label": str, "head": str, "body": str}}. Rule-based assembly is the
 guaranteed fallback; Gemini polish (later task) is layered on top when a key is configured.
 """
-from django.conf import settings
 from core import questions as Q
 
 # Headline lead-ins per result item. {kw} is filled with the primary chosen keyword.
@@ -70,6 +69,7 @@ def _answers_by_item(track, answers):
 
 
 def _head_for(item, group):
+    """Pick the keyword (free-text input beats choice, else '당신') and format the headline."""
     choices = [a.get("choice") for a in group if a.get("choice")]
     texts = [a.get("text") for a in group if a.get("text")]
     kw = (texts[0] if texts else (choices[0] if choices else "당신")).strip() or "당신"
@@ -77,6 +77,7 @@ def _head_for(item, group):
 
 
 def _body_for(item, group):
+    """Join the matched copy fragments (max 3); DEFAULT_BODY when none match."""
     parts = []
     for a in group:
         frag = OPTION_FRAGMENTS.get((item, a.get("choice")))
@@ -84,7 +85,7 @@ def _body_for(item, group):
             parts.append(frag)
     if not parts:
         parts.append(DEFAULT_BODY)
-    # 2~3 supporting lines max.
+    # up to 2 fragments today; cap at 3 for safety.
     return " ".join(parts[:3])
 
 

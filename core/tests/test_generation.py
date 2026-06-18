@@ -1,5 +1,5 @@
 import pytest
-from core.generation import generate, assemble
+from core.generation import generate, assemble, DEFAULT_BODY
 from core import questions as Q
 
 def _answers_all(track, choice_index=0):
@@ -28,14 +28,14 @@ def test_assemble_with_empty_answers_still_full(track):
         assert block["head"].strip()
         assert block["body"].strip()
 
-def test_assemble_with_partial_answers(track="brand"):
+def test_assemble_with_partial_answers():
     answers = [{"qid": "b1", "choice": "따뜻함", "text": "씨앗"}]
-    result = assemble(track, answers)
-    assert set(result.keys()) == set(Q.RESULT_ITEMS[track])
+    result = assemble("brand", answers)
+    assert set(result.keys()) == set(Q.RESULT_ITEMS["brand"])
     assert "씨앗" in result["naming"]["head"] or "씨앗" in result["naming"]["body"]
 
-def test_generate_without_key_uses_assembly(settings):
-    settings.GEMINI_API_KEY = ""
+def test_generate_delegates_to_assemble():
+    # No Gemini branch yet; generate() is a thin pass-through. Extended in the Gemini task.
     result = generate("brand", _answers_all("brand"))
     assert set(result.keys()) == set(Q.RESULT_ITEMS["brand"])
     for block in result.values():
@@ -45,3 +45,4 @@ def test_unknown_choice_falls_back_to_default():
     answers = [{"qid": "b1", "choice": "존재하지않는선택지"}]
     result = assemble("brand", answers)
     assert result["naming"]["head"].strip()
+    assert result["naming"]["body"] == DEFAULT_BODY
