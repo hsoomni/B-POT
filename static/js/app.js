@@ -19,12 +19,19 @@ const els = {
 
 let state = createInitialState();
 let questions = null;
+let submitting = false;
 
 async function boot() {
-  const resp = await fetch('/api/questions/');
-  questions = await resp.json();
   els.prev.addEventListener('click', onPrev);
   els.next.addEventListener('click', onNext);
+  try {
+    const resp = await fetch('/api/questions/');
+    if (!resp.ok) throw new Error('questions fetch failed');
+    questions = await resp.json();
+  } catch (e) {
+    els.container.innerHTML = '<div class="screen"><h2 class="screen-title">불러오지 못했어요</h2><p class="notice">네트워크를 확인하고 새로고침해 주세요.</p></div>';
+    return;
+  }
   render();
 }
 
@@ -119,15 +126,18 @@ function wireScreen(kind) {
   if (kind === 'result') {
     const saveBtn = $('[data-save-png]', els.container);
     if (saveBtn) saveBtn.addEventListener('click', savePng);
+    const ctaBtn = $('[data-go-cta]', els.container);
+    if (ctaBtn) ctaBtn.addEventListener('click', () => go(nextIndex(state.stepIndex)));
   }
   if (kind === 'cta') wireCta();
 }
 
 async function onNext() {
   const kind = stepKind(state.stepIndex);
-  if (!canGoNext(state)) return;
+  if (!canGoNext(state) || submitting) return;
   if (kind === 'question' && questionIndexAt(state.stepIndex) === 9) {
-    await submit();
+    submitting = true;
+    try { await submit(); } finally { submitting = false; }
   }
   go(nextIndex(state.stepIndex));
 }
@@ -162,9 +172,16 @@ function fallbackGenerated() {
 function renderResultStep() {
   const order = questions.result_items[state.track === 'personal' ? 'personal' : 'brand'];
   els.container.innerHTML = renderResult(state.result.generated, state.track, order);
+  const ctaBtn = document.createElement('button');
+  ctaBtn.type = 'button';
+  ctaBtn.className = 'btn-start';
+  ctaBtn.dataset.goCta = '';
+  ctaBtn.textContent = '문의하기 →';
+  $('.screen-result', els.container).appendChild(ctaBtn);
 }
 
 async function savePng() {
+  if (!window.html2canvas) { alert('이미지 저장 도구를 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.'); return; }
   const node = $('[data-capture]', els.container);
   const canvas = await window.html2canvas(node, { backgroundColor: null, scale: 2 });
   const link = document.createElement('a');
@@ -174,11 +191,12 @@ async function savePng() {
 }
 
 function wireCta() {
-  els.next.classList.add('is-hidden');
   const form = els.container;
+  if ($('[data-send-cta]', form)) return; // already wired
   const sendBtn = document.createElement('button');
   sendBtn.type = 'button';
   sendBtn.className = 'btn-start';
+  sendBtn.dataset.sendCta = '';
   sendBtn.textContent = '문의 보내기';
   $('.screen-cta', form).appendChild(sendBtn);
   sendBtn.addEventListener('click', async () => {
