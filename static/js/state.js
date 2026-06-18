@@ -8,7 +8,7 @@ export const STEP_ORDER = [
   'result', 'cta',
 ];
 
-const FIRST_QUESTION = 3; // STEP_ORDER index of q0
+const FIRST_QUESTION = STEP_ORDER.indexOf('q0'); // self-maintaining if STEP_ORDER changes
 
 export function createInitialState() {
   return {
@@ -54,6 +54,7 @@ export function canGoNext(state) {
   if (kind === 'track') return !!state.track;
   if (kind === 'basic') return !!(state.basicInfo && state.basicInfo.name && state.basicInfo.name.trim());
   if (kind === 'question') {
+    if (!state.track) return false;
     const n = questionIndexAt(state.stepIndex) + 1;
     const prefix = state.track === 'personal' ? 'p' : 'b';
     const qid = `${prefix}${n}`;

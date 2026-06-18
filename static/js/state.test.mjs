@@ -56,4 +56,5 @@ test('setAnswer upserts by qid immutably', () => {
   assert.equal(s2.answers[0].choice, '대담함');
   assert.equal(s2.answers[0].text, '씨앗');
   assert.notEqual(s, s1);
+  assert.equal(s1.answers[0].choice, '따뜻함'); // s1 not mutated by creating s2
 });
