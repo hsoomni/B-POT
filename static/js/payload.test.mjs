@@ -30,3 +30,10 @@ test('inquiryErrors flags missing/invalid fields', () => {
   assert.ok(errs.includes('company'));
   assert.ok(errs.includes('email'));
 });
+
+test('inquiryErrors treats whitespace-only as missing and flags manager', () => {
+  const errs = inquiryErrors({ inquiry_type: 'coffeechat', company: '   ', manager: '', email: 'a@b.com' });
+  assert.ok(errs.includes('company'));  // whitespace-only counts as missing
+  assert.ok(errs.includes('manager'));  // required field missing
+  assert.ok(!errs.includes('email'));   // valid email not flagged
+});
