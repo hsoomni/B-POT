@@ -20,14 +20,12 @@ BPOT.renderResult = function (state, onCTA) {
     ]);
   });
 
-  // 1page 텍스트 페이퍼 — 좌상단 [이름/브랜드명] + B-POT, 포인트 색 룰
-  // 우측에 클립 디자인 요소
+  // 클립: 페이퍼와 배경 사이(뒤)에 끼워진 연출. PNG에는 미포함(seed-packet 밖 형제 요소).
   var clip = el("div", { class: "paper__clip", "aria-hidden": "true",
-    html: '<svg width="22" height="46" viewBox="0 0 22 46" fill="none" stroke="#8a8f92" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 7 v26 a4.5 4.5 0 0 1 -9 0 V9 a7.5 7.5 0 0 1 15 0 v26 a10.5 10.5 0 0 1 -21 0 V11"/></svg>' });
+    html: '<svg width="24" height="50" viewBox="0 0 22 46" fill="none" stroke="#8a8f92" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 7 v26 a4.5 4.5 0 0 1 -9 0 V9 a7.5 7.5 0 0 1 15 0 v26 a10.5 10.5 0 0 1 -21 0 V11"/></svg>' });
 
-  // 1page 텍스트 페이퍼 — 좌상단 이름만 (B-POT 마크 제거)
+  // 1page 텍스트 페이퍼 — 좌상단 이름만. (저장 캡처 대상 = 이 페이퍼만)
   var packet = el("div", { class: "packet paper", id: "seed-packet" }, [
-    clip,
     el("div", { class: "paper__head" }, [
       el("p", { class: "paper__name", text: owner }),
     ]),
@@ -35,12 +33,14 @@ BPOT.renderResult = function (state, onCTA) {
     el("div", { class: "packet__items" }, packetItems),
   ]);
 
+  var paperWrap = el("div", { class: "paper-wrap" }, [clip, packet]);
+
   var saveBtn = el("button", { class: "btn--ghost result-btn", type: "button",
     onclick: function () { BPOT.savePacketPNG(owner); } }, ["저장하기"]);
   var ctaBtn = el("button", { class: "btn result-btn", type: "button", onclick: onCTA }, ["문의하기"]);
 
   return el("div", { class: "step step--scroll fade-in" }, [
-    packet,
+    paperWrap,
     el("div", { class: "result-actions" }, [
       el("div", { class: "result-cta" }, [
         saveBtn,
@@ -62,7 +62,7 @@ BPOT.savePacketPNG = function (owner) {
     .then(function (canvas) {
       var link = document.createElement("a");
       var safe = (owner || "b-pot").replace(/[^\w가-힣]/g, "_");
-      link.download = "B-POT_씨앗봉투_" + safe + ".png";
+      link.download = "BPOT_" + safe + ".png";
       link.href = canvas.toDataURL("image/png");
       link.click();
     })

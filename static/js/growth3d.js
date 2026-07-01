@@ -32,7 +32,7 @@ BPOT.resultIcons = function (answers, category) {
     var cs = (a && a.choices) ? a.choices : (a && a.choice ? [a.choice] : []);
     cs.forEach(function (ch) { if (BPOT.ICON_MAP[ch]) names.push(BPOT.ICON_MAP[ch]); });
   });
-  names = names.filter(function (v, i) { return names.indexOf(v) === i; }).slice(0, 4);
+  names = names.filter(function (v, i) { return names.indexOf(v) === i; }).slice(0, 3);
   return names;
 };
 
@@ -44,8 +44,8 @@ BPOT.mountGrowingPot = function (el, opts) {
 
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
-  camera.position.set(0, 3.2, 13.8);
-  camera.lookAt(0, 2.05, 0);
+  camera.position.set(0, 3.4, 14.6);
+  camera.lookAt(0, 2.1, 0);
 
   var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(W, H);
@@ -96,12 +96,12 @@ BPOT.mountGrowingPot = function (el, opts) {
     return { x: Math.sin(-ang) * len, y: atY + Math.cos(ang) * len };
   }
   var tips = [];
-  tips.push(branch(HS*0.42, 1.05, 1.05, 0.07));
-  tips.push(branch(HS*0.50, -1.08, 1.08, 0.07));
-  tips.push(branch(HS*0.66, 0.78, 0.98, 0.06));
-  tips.push(branch(HS*0.74, -0.80, 0.98, 0.06));
-  tips.push(branch(HS*0.90, 0.28, 0.72, 0.05));
-  tips.push(branch(HS*0.92, -0.32, 0.72, 0.05));
+  tips.push(branch(HS*0.40, 1.12, 1.35, 0.075));
+  tips.push(branch(HS*0.48, -1.15, 1.38, 0.075));
+  tips.push(branch(HS*0.64, 0.82, 1.18, 0.065));
+  tips.push(branch(HS*0.72, -0.84, 1.18, 0.065));
+  tips.push(branch(HS*0.88, 0.32, 0.92, 0.055));
+  tips.push(branch(HS*0.90, -0.36, 0.92, 0.055));
 
   // 잎 몇 장
   var leafMat = M(0x5DAA3C, 0.7), leafGeo = new THREE.SphereGeometry(0.18, 14, 10);
@@ -210,7 +210,7 @@ BPOT.mountGrowingPot = function (el, opts) {
     g.position.set(h[0], h[1] - 0.28, (i % 3 - 1) * 0.16);
     g.scale.setScalar(0.001);
     plant.add(g);
-    items.push({ g: g, t0: 0.9 + (h[1] / HS) * 1.4 + (i % 4) * 0.1, sc: ICON_SCALE });
+    items.push({ g: g, t0: 1.6 + (h[1] / HS) * 2.6 + (i % 4) * 0.18, sc: ICON_SCALE });
   });
 
   var raf, alive = true, last = performance.now(), t = 0;
@@ -220,18 +220,18 @@ BPOT.mountGrowingPot = function (el, opts) {
     if (!alive) return;
     raf = requestAnimationFrame(loop);
     var dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
-    var g = ease(c01(t / 1.9));
+    var g = ease(c01(t / 3.4));
     trunk.scale.y = Math.max(0.001, g);
-    var bs = ease(c01((t - 0.7) / 0.5));
+    var bs = ease(c01((t - 1.3) / 0.9));
     branches.forEach(function (b) { b.scale.setScalar(bs); });
-    var lvs = ease(c01((t - 0.9) / 0.5));
+    var lvs = ease(c01((t - 1.7) / 0.9));
     leaves.forEach(function (L) { L.m.scale.set(1.5 * lvs, 0.45 * lvs, 0.9 * lvs); });
     items.forEach(function (it, i) {
-      var s = ease(c01((t - it.t0) / 0.5));
+      var s = ease(c01((t - it.t0) / 0.8));
       it.g.scale.setScalar(s * it.sc);
       it.g.rotation.z = Math.sin(t * 1.5 + i) * 0.04 * c01(t - it.t0);  // 매달려 흔들
     });
-    var grown = c01(t - 2.0);
+    var grown = c01(t - 5.5);
     plant.rotation.z = Math.sin(t * 1.1) * 0.025 * grown;
     pot.rotation.y = Math.sin(t * 0.5) * 0.07;
     renderer.render(scene, camera);

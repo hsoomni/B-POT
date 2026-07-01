@@ -96,6 +96,11 @@
         el("div", { class: "navbar-fill", style: "width:" + pct + "%" }),
       ]));
     }
+    if (S.step >= 13) {
+      children.push(el("button", { class: "home-btn", type: "button", "aria-label": "처음으로",
+        onclick: function () { if (window.confirm("처음으로 돌아갈까요? 결과가 사라집니다.")) { resetAll(); go(0); } } },
+        [BPOT.icon("home")]));
+    }
     return el("header", { class: "app-header" }, children);
   }
 
@@ -189,12 +194,12 @@
   function stepBasic() {
     var isBrand = S.track === "brand";
     var fields = isBrand
-      ? [{ key: "name", label: "브랜드명 (또는 후보)", ph: "예: 오늘의 집" },
-         { key: "category", label: "카테고리 / 업종", ph: "예: 인테리어 플랫폼" },
-         { key: "target", label: "주요 타깃", ph: "예: 20~30대 직장인" }]
-      : [{ key: "name", label: "이름 또는 활동명", ph: "예: 김수연" },
-         { key: "category", label: "좋아하는 컬러", ph: "예: 코랄, 네이비, 올리브" },
-         { key: "target", label: "자주 듣는 말", ph: "예: 듬직하다, 차분하다" }];
+      ? [{ key: "name", label: "브랜드명 (또는 후보) *", ph: "예: 오늘의 집" },
+         { key: "category", label: "카테고리 / 업종 (선택)", ph: "예: 인테리어 플랫폼" },
+         { key: "target", label: "주요 타깃 (선택)", ph: "예: 20~30대 직장인" }]
+      : [{ key: "name", label: "이름 또는 활동명 *", ph: "예: 김수연" },
+         { key: "category", label: "좋아하는 컬러 (선택)", ph: "예: 코랄, 네이비, 올리브" },
+         { key: "target", label: "자주 듣는 말 (선택)", ph: "예: 듬직하다, 차분하다" }];
 
     var form = el("div", { class: "form" }, fields.map(function (f) {
       return el("div", {}, [
@@ -222,7 +227,10 @@
         el("div", { class: "btn-row" }, [
           el("button", { class: "btn--ghost", type: "button", onclick: function () { go(1); } },
             [BPOT.icon("back"), " 이전"]),
-          el("button", { class: "btn", type: "button", onclick: function () { go(3); } }, ["다음 ", BPOT.icon("forward")]),
+          el("button", { class: "btn", type: "button", onclick: function () {
+            if (!(S.basicInfo.name || "").trim()) { BPOT.toast(isBrand ? "브랜드명을 입력해주세요" : "이름을 입력해주세요"); return; }
+            go(3);
+          } }, ["다음 ", BPOT.icon("forward")]),
         ]),
       ]),
     ]);
@@ -299,12 +307,12 @@
   // ── 결과 생성 중: 자라나는 3D 화면 ──
   function stepGrowing() {
     if (S.disposeGrow) { S.disposeGrow(); S.disposeGrow = null; }
-    var wrap = el("div", { class: "step fade-in" }, [
-      el("div", { class: "grow-head" }, [
-        el("p", { class: "grow-title", text: "심은 씨앗이 자라고 있어요" }),
-        el("p", { class: "grow-sub loading-dots", text: "결과지를 만드는 중" }),
+    var wrap = el("div", { class: "step step--grow fade-in" }, [
+      el("div", { class: "grow-main" }, [
+        el("p", { class: "grow-title", text: "씨앗이 싹을 틔우고 있어요" }),
+        el("div", { class: "grow-stage", id: "grow-canvas", "aria-label": "키워드 아이콘이 자라나는 3D 화면" }),
       ]),
-      el("div", { class: "grow-stage", id: "grow-canvas", "aria-label": "키워드 아이콘이 자라나는 3D 화면" }),
+      el("p", { class: "grow-foot loading-dots", text: "결과지를 출력하고 있어요" }),
     ]);
     setTimeout(function () {
       var c = document.getElementById("grow-canvas");
@@ -326,7 +334,7 @@
       basic_info: S.basicInfo,
       answers: S.answers.map(function (a) { return { id: a.id, choices: a.choices || [], text: a.text || "" }; }),
     };
-    var minAnim = new Promise(function (r) { setTimeout(r, 2900); });
+    var minAnim = new Promise(function (r) { setTimeout(r, 10000); });  // 자라나는 화면 ~10초
     var cleanup = function () { if (S.disposeGrow) { S.disposeGrow(); S.disposeGrow = null; } };
     Promise.all([postJSON("/api/submit", payload), minAnim]).then(function (arr) {
       var res = arr[0];

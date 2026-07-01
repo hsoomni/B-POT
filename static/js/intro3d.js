@@ -12,8 +12,13 @@ BPOT.mountPot = function (el) {
 
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
-  camera.position.set(0, 1.7, 9.4);
-  camera.lookAt(0, 1.0, 0);
+  // 화면비에 따라 화분이 잘리지 않게 프레이밍: 세로(모바일)는 가깝게, 가로(데스크탑)는 더 뒤로 + 중앙
+  function frameCamera(w, h) {
+    var wide = (w / h) >= 1.0;
+    if (wide) { camera.position.set(0, 1.7, 10.3); camera.lookAt(0, 1.3, 0); }
+    else { camera.position.set(0, 1.85, 11.0); camera.lookAt(0, 1.12, 0); }
+  }
+  frameCamera(W, H);
 
   var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(W, H);
@@ -66,7 +71,7 @@ BPOT.mountPot = function (el) {
 
   var pot = new THREE.Group();
   pot.add(potMesh, innerMesh, soilDisk, botDisk, saucerMesh, saucerBot, leftEye, rightEye, smileMesh);
-  pot.scale.set(1.34, 1.1, 1.34);  // 중앙·크게 (카피 위로 겹침)
+  pot.scale.set(1.22, 1.04, 1.22);  // 카피 위로 겹치되 받침까지 프레임 안에
   scene.add(pot);
 
   // ── 자연스러운 3D 씨앗 (무광 클레이 — 화분 톤과 조화) ──────────────────────
@@ -202,9 +207,13 @@ BPOT.mountPot = function (el) {
   function onResize() {
     var w = el.clientWidth, h = el.clientHeight;
     if (!w || !h) return;
-    camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h);
+    camera.aspect = w / h; frameCamera(w, h); camera.updateProjectionMatrix(); renderer.setSize(w, h);
   }
   window.addEventListener("resize", onResize);
+  // 레이아웃 확정(폰트 로딩·스크롤바 반영) 후 다시 맞춰 중심선 어긋남 방지
+  requestAnimationFrame(onResize);
+  setTimeout(onResize, 250);
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(onResize); }
 
   return function dispose() {
     alive = false;
